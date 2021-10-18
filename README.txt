@@ -1,5 +1,7 @@
 int settickets(int number)
-Files:
+(Side note)
+- Added gettickets() for debugging
+(Files)
 - [UPDATE] Makefile
     CPUS := 1 // Scheduler to run only on 1 CPU
     UPROGS // Add test_settickets user program
@@ -20,3 +22,4 @@ Files:
 - [UPDATE] defs.h
     Add sys call prototype
 - [ADD] test_settickets.c
+

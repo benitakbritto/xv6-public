@@ -12,5 +12,6 @@ main(int argc, char *argv[])
     printf(1, "argv[1] = %d\n", atoi(argv[1]));
     res = settickets(atoi(argv[1]));
     printf(1, "Return value = %d\n", res);
+    printf(1, "Get tickets = %d\n", gettickets());
     exit();
 }

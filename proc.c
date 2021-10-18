@@ -546,3 +546,10 @@ settickets(int number)
     return 0; // Success
   }
 }
+
+int 
+gettickets(void)
+{
+ 
+  return myproc()->tickets;
+}

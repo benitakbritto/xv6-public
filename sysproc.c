@@ -17,6 +17,12 @@ sys_settickets(void)
   return settickets(number);
 }
 
+int 
+sys_gettickets(void)
+{
+  return gettickets();
+}
+
 int
 sys_fork(void)
 {
