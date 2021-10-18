@@ -73,6 +73,7 @@ myproc(void) {
 static struct proc*
 allocproc(void)
 {
+  cprintf("allocproc() called\n");
   struct proc *p;
   char *sp;
 
@@ -88,6 +89,7 @@ allocproc(void)
 found:
   p->state = EMBRYO;
   p->pid = nextpid++;
+  p->tickets = 1; // default
 
   release(&ptable.lock);
 
@@ -191,11 +193,15 @@ fork(void)
 
   // Copy process state from proc.
   if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz)) == 0){
+    
     kfree(np->kstack);
     np->kstack = 0;
     np->state = UNUSED;
     return -1;
   }
+  cprintf("[%d] curproc->tickets: %d\n", curproc->pid, curproc->tickets);
+  np->tickets = curproc->tickets; // Child inherits parent's tickets
+  cprintf("Here\n");
   np->sz = curproc->sz;
   np->parent = curproc;
   *np->tf = *curproc->tf;
@@ -536,13 +542,14 @@ procdump(void)
 int 
 settickets(int number)
 {
+  cprintf("Inside settickets() sys call \n");
   if (number < 1)
   {
     return -1; // Fail
   }
   else
   {
-    myproc()->tickets = number; // TODO: set default to 1
+    myproc()->tickets = number;
     return 0; // Success
   }
 }
@@ -550,6 +557,6 @@ settickets(int number)
 int 
 gettickets(void)
 {
- 
+  cprintf("[%d] Inside gettickets() sys call \n", myproc()->pid);
   return myproc()->tickets;
 }

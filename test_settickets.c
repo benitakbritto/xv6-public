@@ -9,9 +9,22 @@ main(int argc, char *argv[])
 {
     int res;
     printf(1, "test_settickets.c was invoked\n");
-    printf(1, "argv[1] = %d\n", atoi(argv[1]));
     res = settickets(atoi(argv[1]));
-    printf(1, "Return value = %d\n", res);
-    printf(1, "Get tickets = %d\n", gettickets());
+    printf(1, "Return value of settickets() = %d\n", res);
+    
+    int rc = fork();
+    if (rc < 0)
+    {
+        printf(1, "forked failed \n");
+    }
+    else if (rc == 0)
+    {
+        printf(1, "CHILD tickets = %d\n", gettickets());
+    }
+    else
+    {
+        wait();
+        printf(1, "PARENT tickets = %d\n", gettickets());
+    }
     exit();
 }
