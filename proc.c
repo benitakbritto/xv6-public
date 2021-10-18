@@ -532,3 +532,17 @@ procdump(void)
     cprintf("\n");
   }
 }
+
+int 
+settickets(int number)
+{
+  if (number < 1)
+  {
+    return -1; // Fail
+  }
+  else
+  {
+    myproc()->tickets = number; // TODO: set default to 1
+    return 0; // Success
+  }
+}
