@@ -90,6 +90,8 @@ found:
   p->state = EMBRYO;
   p->pid = nextpid++;
   p->tickets = 1; // default
+  p->runSoFar = 0; // default
+  p->totalTicks = 0; // default
 
   release(&ptable.lock);
 
@@ -339,6 +341,20 @@ scheduler(void)
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+
+      // Proportional share scheduler
+      if (c->proc != 0 && c->proc->state == RUNNING && c->proc->runSoFar < c->proc->tickets)
+      {
+        c->proc->runSoFar += 1;
+        c->proc->totalTicks += 1;
+        continue;
+      }
+      else if (c->proc != 0 && c->proc->state == RUNNING && c->proc->runSoFar == c->proc->tickets)
+      {
+        c->proc->runSoFar = 0; // reset
+      }
+
+
       if(p->state != RUNNABLE)
         continue;
 
@@ -346,6 +362,12 @@ scheduler(void)
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
       c->proc = p;
+
+      cprintf("%d: %s running\n", c->proc->pid, c->proc->name);
+
+      c->proc->totalTicks++; // Proportional share scheduler
+      c->proc->runSoFar++; // Proportional share scheduler
+      
       switchuvm(p);
       p->state = RUNNING;
 
@@ -550,6 +572,7 @@ settickets(int number)
   else
   {
     myproc()->tickets = number;
+    myproc()->runSoFar = 0; // TODO: Is this correct?
     return 0; // Success
   }
 }
