@@ -6,6 +6,7 @@
 #include "x86.h"
 #include "proc.h"
 #include "spinlock.h"
+#include "pstat.h"
 
 struct {
   struct spinlock lock;
@@ -73,7 +74,7 @@ myproc(void) {
 static struct proc*
 allocproc(void)
 {
-  cprintf("allocproc() called\n");
+  //cprintf("allocproc() called\n");
   struct proc *p;
   char *sp;
 
@@ -195,18 +196,17 @@ fork(void)
 
   // Copy process state from proc.
   if((np->pgdir = copyuvm(curproc->pgdir, curproc->sz)) == 0){
-    
     kfree(np->kstack);
     np->kstack = 0;
     np->state = UNUSED;
     return -1;
   }
-  cprintf("[%d] curproc->tickets: %d\n", curproc->pid, curproc->tickets);
-  np->tickets = curproc->tickets; // Child inherits parent's tickets
-  cprintf("Here\n");
+
   np->sz = curproc->sz;
   np->parent = curproc;
+  np->tickets = np->parent->tickets; // Child inherits parent's tickets
   *np->tf = *curproc->tf;
+  //cprintf("[%d] p->tickets: %d\n", np->pid, np->tickets);
 
   // Clear %eax so that fork returns 0 in the child.
   np->tf->eax = 0;
@@ -341,38 +341,27 @@ scheduler(void)
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
-
-      // Proportional share scheduler
-      if (c->proc != 0 && c->proc->state == RUNNING && c->proc->runSoFar < c->proc->tickets)
-      {
-        c->proc->runSoFar += 1;
-        c->proc->totalTicks += 1;
-        continue;
-      }
-      else if (c->proc != 0 && c->proc->state == RUNNING && c->proc->runSoFar == c->proc->tickets)
-      {
-        c->proc->runSoFar = 0; // reset
-      }
-
-
       if(p->state != RUNNABLE)
-        continue;
+          continue;
 
       // Switch to chosen process.  It is the process's job
       // to release ptable.lock and then reacquire it
       // before jumping back to us.
       c->proc = p;
 
-      cprintf("%d: %s running\n", c->proc->pid, c->proc->name);
+      for (int timeslice = 0; timeslice < p->tickets; timeslice++)
+      {
+        // process was killed or process exited
+        if (p->state != RUNNABLE) break;
 
-      c->proc->totalTicks++; // Proportional share scheduler
-      c->proc->runSoFar++; // Proportional share scheduler
-      
-      switchuvm(p);
-      p->state = RUNNING;
+        c->proc->totalTicks++;
 
-      swtch(&(c->scheduler), p->context);
-      switchkvm();
+        switchuvm(p);
+        p->state = RUNNING;
+
+        swtch(&(c->scheduler), p->context);
+        switchkvm();
+      }
 
       // Process is done running for now.
       // It should have changed its p->state before coming back.
@@ -564,7 +553,6 @@ procdump(void)
 int 
 settickets(int number)
 {
-  cprintf("Inside settickets() sys call \n");
   if (number < 1)
   {
     return -1; // Fail
@@ -572,7 +560,7 @@ settickets(int number)
   else
   {
     myproc()->tickets = number;
-    myproc()->runSoFar = 0; // TODO: Is this correct?
+    myproc()->runSoFar = 0; 
     return 0; // Success
   }
 }
@@ -580,6 +568,31 @@ settickets(int number)
 int 
 gettickets(void)
 {
-  cprintf("[%d] Inside gettickets() sys call \n", myproc()->pid);
   return myproc()->tickets;
+}
+
+int
+getpinfo(struct pstat *pstat)
+{
+  if (pstat == (void *)0)
+  {
+    return -1;
+  }
+
+  acquire(&ptable.lock);
+  int i = 0;
+  struct proc *p;
+  for(p = ptable.proc, i = 0; p < &ptable.proc[NPROC]; p++, i++)
+  {
+    if (p->state != UNUSED)
+    {
+      pstat->inuse[i] = 1;
+      pstat->tickets[i] = p->tickets;
+      pstat->pid[i] = p->pid;
+      pstat->ticks[i] = p->totalTicks;
+    }    
+  }
+  release(&ptable.lock);
+
+  return 0;
 }

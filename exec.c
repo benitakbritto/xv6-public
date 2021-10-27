@@ -49,7 +49,7 @@ exec(char *path, char **argv)
       goto bad;
     if(ph.vaddr + ph.memsz < ph.vaddr)
       goto bad;
-    if((sz = allocuvm(pgdir, sz, ph.vaddr + ph.memsz)) == 0)
+    if((sz = allocuvm(pgdir, sz + PGSIZE, ph.vaddr + ph.memsz + PGSIZE)) == 0) // + PGSIZE
       goto bad;
     if(ph.vaddr % PGSIZE != 0)
       goto bad;

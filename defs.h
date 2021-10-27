@@ -9,6 +9,7 @@ struct spinlock;
 struct sleeplock;
 struct stat;
 struct superblock;
+struct pstat; // TODO: Why is this here?
 
 // bio.c
 void            binit(void);
@@ -122,6 +123,7 @@ void            wakeup(void*);
 void            yield(void);
 int             settickets(int);
 int             gettickets(void);
+int             getpinfo(struct pstat *);
 
 // swtch.S
 void            swtch(struct context**, struct context*);

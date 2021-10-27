@@ -1,5 +1,6 @@
 struct stat;
 struct rtcdate;
+struct pstat; // TODO: Why should this be here?
 
 // system calls
 int fork(void);
@@ -25,6 +26,7 @@ int sleep(int);
 int uptime(void);
 int settickets(int);
 int gettickets(void);
+int getpinfo(struct pstat *);
 
 // ulib.c
 int stat(const char*, struct stat*);

@@ -50,7 +50,7 @@ struct proc {
   struct inode *cwd;           // Current directory
   char name[16];               // Process name (debugging)
   int tickets;                 // Process tickets for scheduler
-  int runSoFar;                // Number of times it ran in one sitting
+  int runSoFar;                // Number of times it ran in one sitting (proportional slice)
   int totalTicks;              // Total number of times it has run
 };
 
